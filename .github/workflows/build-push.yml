@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/langsmith-polly
 
 jobs:
   build-push:
@@ -51,6 +51,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: langsmith-polly.dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
