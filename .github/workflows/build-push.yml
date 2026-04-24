@@ -18,6 +18,16 @@ jobs:
       contents: read
       packages: write
 
+    strategy:
+      matrix:
+        include:
+          - variant: base
+            tag_suffix: ""
+            outputs: ""
+          - variant: zstd
+            tag_suffix: "-zstd"
+            outputs: "type=image,compression=zstd,compression-level=3,force-compression=true"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +51,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: suffix=${{ matrix.tag_suffix }},onlatest=true
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -56,5 +67,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          outputs: ${{ matrix.outputs }}
+          cache-from: type=gha,scope=${{ matrix.variant }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variant }}
