@@ -9,7 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/langsmith-polly
 
 jobs:
   build-push:
@@ -21,10 +20,24 @@ jobs:
     strategy:
       matrix:
         include:
-          - variant: base
+          - variant: langsmith-polly-gzip
+            image: langsmith-polly
+            dockerfile: langsmith-polly.dockerfile
             tag_suffix: ""
             outputs: ""
-          - variant: zstd
+          - variant: langsmith-polly-zstd
+            image: langsmith-polly
+            dockerfile: langsmith-polly.dockerfile
+            tag_suffix: "-zstd"
+            outputs: "type=image,compression=zstd,compression-level=3,force-compression=true"
+          - variant: pytorch-gzip
+            image: pytorch
+            dockerfile: pytorch.dockerfile
+            tag_suffix: ""
+            outputs: ""
+          - variant: pytorch-zstd
+            image: pytorch
+            dockerfile: pytorch.dockerfile
             tag_suffix: "-zstd"
             outputs: "type=image,compression=zstd,compression-level=3,force-compression=true"
 
@@ -50,7 +63,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
           flavor: suffix=${{ matrix.tag_suffix }},onlatest=true
           tags: |
             type=ref,event=branch
@@ -62,7 +75,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: langsmith-polly.dockerfile
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
